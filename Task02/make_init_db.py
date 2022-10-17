@@ -13,7 +13,7 @@ file.write("""
 CREATE TABLE movies (
   id INTEGER(8) PRIMARY KEY,
   title VARCHAR(255),
-  year VARCHAR(128),
+  year INTEGER(8),
   genres VARCHAR(255)
 );
 """)
@@ -56,6 +56,8 @@ file.write("\n\n")
 #INSERT запросы
 insertM = "\nINSERT INTO movies VALUES "
 
+j = 0
+
 movie = []
 movieId = []
 with open("../dataset/movies.csv", encoding='utf-8') as file:
@@ -66,46 +68,44 @@ with open("../dataset/movies.csv", encoding='utf-8') as file:
             movie.append(sas)
             i += 1
             continue
-        try:
-            movieId.append(sas[0])
-            bufferYear = sas[1].split('(')[1].split(')')
-            bufferName = sas[1].split('(')
+        movieId.append(sas[0])
+        if(sas[0] == "7789"):
+            bufferYear = sas[1][-5:]
+            bufferYear = bufferYear.replace(")", "")
+            name = sas[1].split(" (")
+            name = name[0].replace("\'",".")
+            name = name.replace("\"", ".")
             movie.append(sas)
-            if(len(bufferYear[0]) > 4):
-                movie[i][0] = bufferName[0] + "(" + bufferName[1]
-                bufferYear = bufferName[len(bufferName)-1].split(")")
-                movie[i][1] = bufferYear[0]
-            else:
-                if(sas[0] == '1251'):
-                    movie[i][0] = bufferName[0] + "(" + bufferName[1]
-                    bufferYear = bufferName[len(bufferName)-1].split(")")
-                    movie[i][1] = bufferYear[0]
-                    i += 1
-                    continue
-                if(sas[0] == '7789'):
-                    bufferName = bufferName[0].replace('\'','/')
-                    bufferName = bufferName.replace('\"','/')
-                    movie[i][0] = bufferName
-                    movie[i][1] = bufferYear[0]
-                    i += 1
-                    continue
-                movie[i][0] = bufferName[0]
-                movie[i][1] = bufferYear[0]
-            i+=1
-        except:
-            bufferName = sas[1]
-            movie.append(sas)
-            movie[i][0] = bufferName[0]
-            movie[i][1] = " - "
+            movie[i][0] = name
+            movie[i][1] = bufferYear
             i += 1
+            continue
+        bufferYear = sas[1][-5:]
+        bufferYear = bufferYear.replace(")", "")
+        bufferYear = bufferYear.replace(" ", "")
+        if(bufferYear.isdigit()):
+            bufferName = sas[1][0:len(sas[1]) - 7]
+            movie.append(sas)
+            movie[i][0] = bufferName
+            movie[i][1] = bufferYear
+            i += 1
+        else:
+            name = sas[1]
+            year = "NULL"
+            movie.append(sas)
+            movie[i][0] = name
+            movie[i][1] = year
+            i += 1
+
 movie.pop(0)
+
 file = open("db_init.sql", 'a', encoding='utf-8')
 file.write(insertM)
 for i in range(len(movie)):
     if(i != len(movie)-1):
-        file.write(f'("{movieId[i]}","{movie[i][0]}","{movie[i][1]}","{movie[i][2]}"),')
+        file.write(f'({movieId[i]},"{movie[i][0]}",{movie[i][1]},"{movie[i][2]}"),\n')
     else:
-        file.write(f'("{movieId[i]}","{movie[i][0]}","{movie[i][1]}","{movie[i][2]}");')
+        file.write(f'({movieId[i]},"{movie[i][0]}",{movie[i][1]},"{movie[i][2]}");')
 
 rating = []
 insertR = "\n\nINSERT INTO ratings VALUES "
@@ -113,12 +113,13 @@ with open("../dataset/ratings.csv", encoding='utf-8') as file:
     csvfilereader = csv.reader(file, delimiter=",")
     for sas in csvfilereader:
         rating.append(sas)
+
 rating.pop(0)
 file = open("db_init.sql", 'a', encoding='utf-8')
 file.write(insertR)
 for i in range(len(rating)):
     if(i != len(rating)-1):
-        file.write(f'(NULL,"{rating[i][0]}","{rating[i][1]}","{rating[i][2]}","{rating[i][3]}"),')
+        file.write(f'(NULL,"{rating[i][0]}","{rating[i][1]}","{rating[i][2]}","{rating[i][3]}"),\n')
     else:
         file.write(f'(NULL,"{rating[i][0]}","{rating[i][1]}","{rating[i][2]}","{rating[i][3]}");')
 
@@ -135,9 +136,9 @@ file.write(insertT)
 for i in range(len(tag)):
     if(i != len(tag)-1):
         if (tag[i][3] == "1525285878"):
-            file.write(f'(NULL,"{tag[i][0]}","{tag[i][1]}",{tag[i][2]},"{tag[i][3]}"),')
+            file.write(f'(NULL,"{tag[i][0]}","{tag[i][1]}",{tag[i][2]},"{tag[i][3]}"),\n')
             continue
-        file.write(f'(NULL,"{tag[i][0]}","{tag[i][1]}","{tag[i][2]}","{tag[i][3]}"),')
+        file.write(f'(NULL,"{tag[i][0]}","{tag[i][1]}","{tag[i][2]}","{tag[i][3]}"),\n')
     else:
         file.write(f'(NULL,"{tag[i][0]}","{tag[i][1]}","{tag[i][2]}","{tag[i][3]}");')
 
@@ -152,7 +153,7 @@ file = open("db_init.sql", 'a', encoding='utf-8')
 file.write(insertU)
 for i in range(len(user)):
     if(i != len(user)-1):
-        file.write(f'(NULL,"{user[i][1]}","{user[i][2]}","{user[i][3]}","{user[i][4]}","{user[i][5]}"),')
+        file.write(f'(NULL,"{user[i][1]}","{user[i][2]}","{user[i][3]}","{user[i][4]}","{user[i][5]}"),\n')
     else:
         file.write(f'(NULL,"{user[i][1]}","{user[i][2]}","{user[i][3]}","{user[i][4]}","{user[i][5]}");')
 
